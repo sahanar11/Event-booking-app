@@ -1,11 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const graphqlHttp = require('express-graphql');
-const { buildSchema } =  require('graphql');
+const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const app = express();
 const Event = require('./models/events');
-
+const User = require('./models/users');
 app.use(bodyParser.json());
 
 app.use('/graphql', graphqlHttp({
@@ -17,7 +18,11 @@ app.use('/graphql', graphqlHttp({
             price : Float!
             date : String!
         }
-
+        type User {
+            _id : ID!
+            email : String!
+            password: String
+        }
         input EventInput {
             title : String!
             description: String!
@@ -25,15 +30,22 @@ app.use('/graphql', graphqlHttp({
             date : String!
         }
 
-        type RootQuery {
-            events: [Event!]!     
+        input UserInput {
+            email : String!
+            password: String
         }
-        type RootMutation {
+
+        type Query {
+            events: [Event!]!   
+            users: [User!]!  
+        }
+        type Mutation {
             createEvent(eventInput : EventInput): Event
+            createUser(userInput: UserInput) : User
         }
         schema {
-            query: RootQuery
-            mutation:RootMutation
+            query: Query
+            mutation: Mutation
         }
     `),
     rootValue: {
@@ -48,31 +60,82 @@ app.use('/graphql', graphqlHttp({
         },
         createEvent: args => {
             const event = new Event({
-                title : args.eventInput.title,
-                description : args.eventInput.description,
-                price : +args.eventInput.price,
-                date : new Date(args.eventInput.date)
+                title: args.eventInput.title,
+                description: args.eventInput.description,
+                price: +args.eventInput.price,
+                date: new Date(args.eventInput.date),
+                creator: '5c58149be5c5fd4ced58f762'
             });
-           return event.save().then(result => {
-                console.log(result);
-                return {...result._doc};
-           }).catch(err => {
+            let createdEvent;
+            return event
+            .save()
+            .then(result => {
+                createdEvent = { ...result._doc };
+                return User.findById('5c58149be5c5fd4ced58f762');
+                return { ...result._doc };
+            })
+            .then(user => {
+                if(!user) {
+                    throw new Error('User not found');
+                }
+                user.createdEvents.push(event);
+                return user.save();
+            })
+            .then(result => {
+                return createdEvent;
+            })
+            .catch(err => {
                 console.log(err);
                 throw err;
-           });
-           
+            });
+
+        },
+        users: () => {
+            return User.find().then(users => {
+                return users.map(user => {
+                    return { ...user._doc, _id: user.id };
+                });
+            }).catch(err => {
+                throw err;
+            })
+        },
+        createUser: args => {
+            return User.findOne({email:args.userInput.email}).then(user => {
+                if(user){
+                    throw new Error('User already exists');
+                }
+                return bcrypt
+                .hash(args.userInput.password, 12);
+            })
+                .then(hashedPassword => {
+                    const user = new User({
+                        email : args.userInput.email,
+                        password : hashedPassword
+                    });
+                    return user.save();
+                })
+                .then(result => {
+                    console.log(result);
+                    return { ...result._doc };
+                })
+                .catch(err => {
+                    console.log(err);
+                    throw err;
+                });
+
         }
+
     },              // is a bundle of resolvers
     graphiql: true
 }));
 mongoose.connect('mongodb://localhost/event-booking')
-.then(() => {
-    app.listen(3000);
-})
+    .then(() => {
+        app.listen(3000);
+    })
 
-.catch(err => {
-    console.log(err);
-});
-// app.get('/', (req, res, next) => { 
+    .catch(err => {
+        console.log(err);
+    });
+// app.get('/', (req, res, next) => {
 //     res.send("hello world!");
 // })
