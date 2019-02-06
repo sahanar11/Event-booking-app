@@ -16,9 +16,8 @@ app.use('/graphql', graphqlHttp({
 
 mongoose.connect('mongodb://localhost/event-booking')
     .then(() => {
-        app.listen(3000);
+        app.listen(3300);
     })
-
     .catch(err => {
         console.log(err);
     });
