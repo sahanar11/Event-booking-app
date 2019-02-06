@@ -1,4 +1,5 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');  // npm install --save bcryptjs
+const jwt = require('jsonwebtoken'); //npm install --save jsonwebtoken
 const { events } = require('./merge');
 const User = require('../../models/users');
 
@@ -43,5 +44,18 @@ module.exports =  {
            }
     },
 
-   
+   login: async ({email,password}) => {
+    const user = await User.findOne({ email:email });
+    if(! user){
+        throw new Error("user does not exists");
+    }
+    const isEqual = await bcrypt.compare(password, user.password );
+    if(!isEqual){
+        throw new Error("password is incorrect");
+    }
+    const token = jwt.sign({ userId: user.id, email: email}, 'somesupersecretkey',{
+        expiresIn: '1h'
+    });
+    return { userId:user.id,token:token,tokenExpiration: 1};
+   }
 };
