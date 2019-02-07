@@ -1,23 +1,25 @@
 import React, { Component } from 'react';
 import './Auth.css';
+import AuthContext from '../context/auth-context'
 class AuthPage extends Component {
 state = {
     isLogin: true
 };
-  constructor(props){
+
+static contextType = AuthContext;
+constructor(props){
       super(props);
       this.emailEL = React.createRef();
       this.passwordEL = React.createRef();
-  }
+}
   
-  loginOrSignupHandler = () =>{
+loginOrSignupHandler = () =>{
     this.setState(prevState => {
         return { isLogin: !prevState.isLogin };
       });
+};
 
-  }
-
-  submitHandler = (event) => {
+submitHandler = event => {
       event.preventDefault();
       const email = this.emailEL.current.value;
       const password = this.passwordEL.current.value;
@@ -34,7 +36,8 @@ state = {
                   tokenExpiration
               }
           }
-          `};
+          `
+    };
 
     if(!this.state.isLogin){
         requestBody = {
@@ -45,7 +48,8 @@ state = {
                   email
               }
             }
-            `};
+        `
+    };
     }
     
       fetch('http://localhost:3300/graphql',{
@@ -62,13 +66,19 @@ state = {
           return res.json();
       })
       .then(resData => {
-          console.log(resData);
+          if(resData.data.login.token){
+              console.log(resData);
+            this.context.login(
+                resData.data.login.token,
+                resData.data.login.userId,
+                resData.data.login.tokenExpiration
+                );
+          }
       })
       .catch(err => {
           console.log(err);
-      })
-      ;
-  }
+      });
+  };
 
   render() {
     return (
