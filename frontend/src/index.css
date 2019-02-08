@@ -2,6 +2,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: sans-serif;
+  background-color: mistyrose;
+  background-image: '/Users/nbm/Documents/GraphQl/graphql-react-event-booking/frontend/events.jpeg';
 }
 
 .form-control label,
@@ -21,9 +23,9 @@ body {
 
 .form-actions button,
 .btn {
-  background: #5101d1;
+  background:black;
   font: inherit;
-  border: 1px solid #5101d1;
+  border: 1px solid #07010f;
   border-radius: 3px;
   padding: 0.25rem 1rem;
   margin-right: 1rem;
@@ -36,6 +38,6 @@ body {
 .form-actions button:active,
 .btn:hover,
 .btn:active {
-  background: #6219d6;
+  background: black;
   border-color: #6219d6;
 }

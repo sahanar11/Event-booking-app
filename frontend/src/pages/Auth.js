@@ -82,6 +82,7 @@ submitHandler = event => {
 
   render() {
     return (
+        <React.Fragment>
         <form className = "auth-form" onSubmit = {this.submitHandler}  >
             <div className = "form-control">
                 <label htmlFor = "email"> E-Mail</label>
@@ -97,6 +98,7 @@ submitHandler = event => {
             {this.state.isLogin ? ' Signup' : ' Login'} </button>
             </div>
         </form>
+        </React.Fragment>
     );
   }
 }
