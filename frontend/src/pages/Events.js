@@ -14,6 +14,7 @@ class EventsPage extends Component {
         isLoading: false,
         selectedEvent: null 
     };
+    isActive = true;
 
     static contextType = AuthContext;
 
@@ -82,7 +83,7 @@ class EventsPage extends Component {
         `
     };
     const token = this.context.token;
-    console.log("token is :" ,token);
+
     fetch('http://localhost:3300/graphql',{
         method: 'POST',
         body: JSON.stringify(requestBody),
@@ -153,26 +154,67 @@ fetchEvents() {
       })
       .then(resData => {
         const events = resData.data.events;
+        if(this.isActive){
         this.setState({ events: events,isLoading:false });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+        if(this.isActive){
+        this.setState({isLoading:false});
+        }
+      });
+  }
+
+  bookEventHandler = () => {
+    const requestBody = {
+        query: `
+        mutation {
+            bookEvent(eventID: "${this.state.selectedEvent._id}"){
+              _id
+             createdAt
+             updatedAt
+          }
+        }
+    `};
+    fetch('http://localhost:3300/graphql',{
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + this.context.token
+        }
+    })
+    .then(res => {
+        if (res.status !== 200 && res.status !== 201) {
+          throw new Error('Failed!');
+        }
+        return res.json();
+      })
+      .then(resData => {
+       console.log(resData);
+       this.setState({ selectedEvent: null });
       })
       .catch(err => {
         console.log(err);
         this.setState({isLoading:false});
       });
-  }
 
-  bookEventHandler = () => {};
-  
+  };
+  componentWillUnmount(){
+    this.isActive=false;
+  };
   render() {
     return (
         <React.Fragment>
-            {this.state.creating && <Backdrop/> }
+            {(this.state.creating || this.state.selectedEvent ) && <Backdrop/> }
             {this.state.creating && (
             <Modal title ="Add Event" 
             canCancel 
             canConfirm 
             onCancel={this.modalCancelHandler} 
-            onConfirm={this.modalConfirmHandler} >
+            onConfirm={this.modalConfirmHandler}
+            confirmText ="Confirm" >
             <form>
                 <div className="form-control">
                     <label htmlFor="title">Title</label>
@@ -201,7 +243,8 @@ fetchEvents() {
                 canConfirm
                 onCancel={this.modalCancelHandler}
                 onConfirm={this.bookEventHandler}
-                confirmText="Book">
+                confirmText={this.context.token ? 'Book' : 'Confirm'}>
+                
                 <h1>{this.state.selectedEvent.title}</h1>
                 <h2>
                     ${this.state.selectedEvent.price} - {' '}

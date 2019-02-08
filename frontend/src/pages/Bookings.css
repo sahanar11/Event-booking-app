@@ -1,0 +1,11 @@
+.booking-li {
+    width: 100%;
+    border: 0px solid black;
+    padding: 5px;
+    margin: 5px;
+}
+
+.booking-ul{
+    width: 100%;
+    display: flex;
+}
